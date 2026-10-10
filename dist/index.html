@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f8faff">
+  <meta name="description" content="6機種のパチンコ期待値計算。リコリコ・SAOは未確認の増加分を計上しない保守的な下限として、出典と計算条件を開示します。">
+  <title>EVOT PACHINKO | パチンコ期待値計算</title>
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./session.css">
+  <script type="module" src="./app.mjs"></script>
+</head>
+<body>
+  <div class="app-shell">
+  <header class="header"><a href="./" class="brand" aria-label="EVOT PACHINKO ホーム"><span class="brand-wordmark"><span class="logo-gradient">EV</span>OT</span><span class="brand-sub">PACHINKO</span></a><a class="header-link" href="https://seiyokentstyle-source.github.io/ev-live/">EVOTを開く <span aria-hidden="true">↗</span></a></header>
+  <nav class="app-nav" aria-label="計算ツール内の移動"><a href="#calculator">計算条件</a><a href="#session-panel">回転率を調べる</a><a href="#results">計算結果</a></nav>
+  <main>
+    <div class="intro"><p class="eyebrow">EXPECTED VALUE CALCULATOR</p><h1>パチンコ期待値計算</h1><p class="lead">機種と実戦条件から期待値を計算。<br>着席前の台データ・着席後の記録から回転率も調べられます。</p></div>
+    <div class="workspace">
+      <form id="calculator" class="panel inputs" novalidate>
+        <div class="panel-heading"><div><p class="eyebrow">YOUR CONDITIONS</p><h2>機種と実戦条件</h2></div><button class="text-button" id="reset" type="button">条件をリセット <span aria-hidden="true">↺</span></button></div>
+        <div class="machine-field"><label for="machine">計算する機種</label><select id="machine" name="machine" aria-describedby="machine-help"><option value="">機種を選んでください</option><option value="manual">詳細手入力（平均差玉が分かる場合）</option></select><p class="hint" id="machine-help">通常時から打ち始める場合の期待値です。型式・バージョンをご確認ください。</p></div>
+        <section id="machine-spec" class="machine-spec" hidden aria-label="選択した機種のスペック"><div class="spec-heading"><span class="eyebrow">MACHINE SPEC</span><span id="spec-version"></span></div><h3 id="spec-name"></h3><dl class="spec-numbers"><div><dt>通常時の当たり確率</dt><dd id="spec-probability"></dd></div><div><dt id="spec-payout-label">初当たり1回の平均差玉</dt><dd id="spec-payout"></dd></div></dl><p class="hint" id="spec-subtitle"></p><details class="spec-detail"><summary>振り分け・計算根拠を見る <span>＋</span></summary><div id="spec-details"></div><div class="source-links" id="spec-sources"></div><p class="hint" id="spec-checked"></p></details></section>
+        <p class="model-basis" id="model-basis"></p><div class="consistency-checks" id="consistency-checks" aria-label="公表値との照合" hidden></div>
+        <div id="assumption-panel" class="assumption-panel" hidden><strong id="assumption-title"></strong><p id="assumption-note"></p><p id="assumption-scope"></p></div>
+        <p class="sample-note">回転率は実測値を入力してください。通常1000回転・貸玉250玉／1000円・交換28玉／100円・持ち玉50%・出玉補正100%は例の初期値です。保存済みの条件がある場合はその値を復元します。</p>
+        <div class="fields">
+          <div class="field"><label for="rotation">計算に使う回転率</label><div class="input-wrap"><input id="rotation" name="rotation" type="number" inputmode="decimal" min="0.01" max="1000" step="any" placeholder="例：18" aria-describedby="rotation-error"><span>回 / 1,000円</span></div><p class="hint" id="rotation-source"></p><p class="error" id="rotation-error"></p></div>
+          <div class="field"><label for="spins">通常時に回す回転数</label><div class="input-wrap"><input id="spins" name="spins" type="number" inputmode="numeric" min="1" max="1000000" step="1" value="1000" aria-describedby="spins-help spins-error"><span>回転</span></div><p class="hint" id="spins-help">当たり中・時短中の回転数は除きます。</p><p class="error" id="spins-error"></p></div>
+          <div class="field full manual-only" hidden><label for="probability">初当たり確率（手入力）</label><div class="input-wrap"><span class="prefix">1 /</span><input id="probability" name="probability" type="number" inputmode="decimal" min="1" max="1000000" step="any" placeholder="確率の分母" aria-describedby="probability-error"></div><p class="error" id="probability-error"></p></div>
+          <div class="field full manual-only" hidden><label for="payout">初当たり1回の平均差玉（手入力）</label><div class="input-wrap"><input id="payout" name="payout" type="number" inputmode="decimal" min="0" max="10000000" step="any" placeholder="確認した平均差玉" aria-describedby="payout-help payout-error"><span>玉</span></div><p class="hint" id="payout-help">単発・チャージも含む全初当たりから通常復帰までの平均。右打ち・電サポ中の消費を控除し、通常時の消費玉は含めません。手入力値は機種スペックとの照合対象外です。</p><p class="error" id="payout-error"></p></div>
+          <div class="field full machine-only"><label for="payoutRate">標準差玉に対する出玉補正</label><div class="input-wrap small"><input id="payoutRate" name="payoutRate" type="number" inputmode="decimal" min="1" max="120" step="any" value="100" aria-describedby="payoutRate-help payoutRate-error"><span>%</span></div><p class="hint" id="payoutRate-help">100%＝入賞分の打ち込みのみを引いた標準差玉・電サポ増減0。出玉削りなどで3%減る想定なら97%に設定します。</p><p class="error" id="payoutRate-error"></p></div>
+        </div>
+        <div class="holding-field"><div class="holding-top"><label for="holding">持ち玉使用割合</label><div class="holding-value"><input id="holding" name="holding" type="number" inputmode="decimal" min="0" max="100" step="any" value="50" aria-describedby="holding-help holding-error"><span>%</span></div></div><input type="range" id="holding-slider" min="0" max="100" step="1" value="50" aria-label="持ち玉使用割合のスライダー"><div class="range-labels"><span>0% すべて現金</span><span>100% すべて持ち玉</span></div><p class="hint" id="holding-help">通常時に使う玉のうち、持ち玉でまかなう割合。</p><p class="error" id="holding-error"></p></div>
+        <details class="settings" open><summary><span>貸玉・交換条件</span><span class="chevron" aria-hidden="true">⌄</span></summary><div class="fields settings-fields">
+          <div class="field"><label for="loan">1,000円あたりの貸玉数</label><div class="input-wrap small"><input id="loan" name="loan" type="number" inputmode="decimal" min="1" max="100000" step="any" value="250" aria-describedby="loan-error"><span>玉</span></div><p class="error" id="loan-error"></p></div>
+          <div class="field"><label for="exchange">100円あたりの交換玉数</label><div class="input-wrap small"><input id="exchange" name="exchange" type="number" inputmode="decimal" min="1" max="100000" step="any" value="28" aria-describedby="exchange-help exchange-error"><span>玉</span></div><p class="hint" id="exchange-help">等価4円なら25玉、3.57円なら28玉。</p><p class="error" id="exchange-error"></p></div>
+        </div></details>
+        <details class="settings"><summary><span>時給も計算する（任意）</span><span class="chevron" aria-hidden="true">⌄</span></summary><p class="hint">両方入力すると推定時給を表示します。機種ごとの平均消化時間は自動設定しません。</p><div class="fields settings-fields">
+          <div class="field"><label for="speed">通常時の消化速度</label><div class="input-wrap small"><input id="speed" name="speed" type="number" inputmode="decimal" min="1" max="10000" step="any" placeholder="例：200" aria-describedby="speed-help speed-error"><span>回 / 時間</span></div><p class="hint" id="speed-help">当たり中・休憩の時間を除いた速度。</p><p class="error" id="speed-error"></p></div>
+          <div class="field"><label for="bonusMinutes">初当たり1回の平均消化時間</label><div class="input-wrap small"><input id="bonusMinutes" name="bonusMinutes" type="number" inputmode="decimal" min="0" max="10000" step="any" placeholder="例：10" aria-describedby="bonusMinutes-help bonusMinutes-error"><span>分</span></div><p class="hint" id="bonusMinutes-help">チャージ・単発・連チャンを含む、通常復帰までの全初当たりの平均時間。</p><p class="error" id="bonusMinutes-error"></p></div>
+        </div></details>
+        <div class="save-status" id="save-status" role="status">条件はこの端末のブラウザに自動保存されます。</div>
+      </form>
+      <aside class="results" id="results" aria-labelledby="results-title">
+        <section class="result-card"><div class="result-top"><h2 id="results-title">期待収支</h2><span id="result-badge" class="badge">機種を選択</span></div><p class="result-caption" id="result-caption">機種と実測回転率を入力してください</p><div class="main-value" role="status" aria-live="polite" aria-atomic="true"><span id="profit">—</span><span class="yen">円</span></div><p class="result-explanation" id="result-explanation">機種スペックと実戦条件から計算します。</p><div class="result-divider"></div><div class="metric-grid"><div><p id="hourly-label">推定時給</p><strong><span id="hourly">—</span><small id="hourly-unit"> 円</small></strong><span class="metric-unit" id="hourly-note">消化時間を設定すると表示</span></div><div><p id="border-label">ボーダー回転率</p><strong><span id="border">—</span><small id="border-unit"> 回</small></strong><span class="metric-unit">1,000円あたり</span></div></div><div class="gap-line"><span id="gap-label">ボーダーとの差</span><strong id="gap">—</strong></div></section>
+        <div id="error-summary" class="error-summary" role="alert" hidden></div>
+        <section class="panel breakdown"><div class="section-title"><h3>計算の内訳</h3><span>DETAILS</span></div><dl><div><dt id="revenue-label">出玉の期待交換額</dt><dd id="revenue">—</dd></div><div><dt>通常時の玉の使用コスト</dt><dd id="cost">—</dd></div><div><dt>想定初当たり回数</dt><dd id="hits">—</dd></div><div><dt>推定遊技時間 <span>当たり中を含む</span></dt><dd id="hours">—</dd></div></dl><p class="hint">使用コストは現金と持ち玉の価値の合計です。現金投資額そのものではありません。内訳は項目ごとに丸めて表示し、期待収支は丸め前から計算するため、表示上は1円ずれる場合があります。</p></section>
+        <section class="panel comparison"><div class="section-title"><h3>あと1回、回ると？</h3><span>COMPARE</span></div><p class="hint" id="comparison-caption">ほかの条件を固定した期待収支の比較</p><div class="comparison-head"><span>回 / 1,000円</span><span>期待収支</span></div><div id="comparison-rows"></div></section>
+        <p class="result-note" id="result-note">公表スペックと入力条件による推計です。実際の収支を予測・保証するものではありません。</p>
+      </aside>
+    </div>
+    <details class="method"><summary>計算式と、この計算機で扱う範囲 <span aria-hidden="true">＋</span></summary><div><p>初当たり確率・回転率・持ち玉使用割合を一定とした、通常時の固定回転数に対する推計です。登録機種は初当たり、チャージ、RUSH・LTの振り分けを積み上げ、通常時に戻るまでの平均差玉を計算します。公表値自体に丸めがあるため、内部確率そのものの厳密値ではありません。</p><p><b>期待収支</b> ＝ 初当たり期待回数 × 補正後平均差玉 × 1玉の交換額 − 通常時の玉の使用コスト</p><p><b>標準差玉</b> ＝ 払い出し玉数 − 当たり消化に必要な入賞玉数。こぼし・オーバー入賞・電サポ増減は0とし、差は出玉補正で調整します。未公表条件が残る機種は、非負の増加分を除外して数学的に下側になることを確認した場合に限り、保守的な下限として表示します。単一の確定期待値ではありません。下限計算は公表の丸め確率と入力条件を固定したモデルに対するもので、実機収支を保証しません。時給は利用者が入力した平均消化時間を固定した参考計算です。各機種の照合欄は記載した公表指標に対する確認であり、すべての内部条件の確定を意味しません。</p><p><b>通常時の玉の使用コスト</b> ＝ 通常回転数 ×（貸玉数 ÷ 回転率）×｛現金割合 × 1玉の貸玉料金 ＋ 持ち玉割合 × 1玉の交換額｝</p><p><b>推定時給</b> ＝ 期待収支 ÷｛通常回転数 ÷ 通常時の消化速度 ＋ 初当たり期待回数 × 当たりの平均消化時間 ÷ 60｝。消化時間が未入力なら時給を表示しません。</p><p>平均差玉は単発・チャージも連チャンも含む、すべての初当たりの平均です。RUSHに入った場合だけの平均や、払い出し玉数そのものとは異なります。特殊な開始状態やRUSH中からの期待値は扱いません。</p><p>持ち玉の増減・枯渇は自動シミュレーションしません。再プレイの手数料や上限、遊タイム、閉店による取り切れなさ、コンプリート機能による打ち切り、交換の端数は対象外です。予定通常回転数までに発生した当たりを通常復帰まで消化する前提で、休憩時間は含めません。</p><p>条件の保存先はこのブラウザのみです。別の端末とは同期しません。機種選択時の値と詳細手入力の平均差玉は別に保持し、旧版の保存データは上書きしません。</p></div></details>
+  </main>
+  <footer><span class="footer-brand"><span class="logo-gradient">EV</span>OT <small>PACHINKO</small></span><span>機種スペックと実戦データで計算</span></footer>
+  <a href="#results" class="mobile-result-link">計算結果を見る <strong id="mobile-profit">—</strong><span aria-hidden="true">↑</span></a>
+  </div>
+</body>
+</html>
