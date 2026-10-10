@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#f8faff">
   <meta name="description" content="6機種のパチンコ期待値計算。リコリコ・SAOは未確認の増加分を計上しない保守的な下限として、出典と計算条件を開示します。">
-  <title>EVOT PACHINKO | パチンコ期待値計算</title>
+  <title>PACHIEV | パチンコ期待値計算</title>
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./style.css">
   <link rel="stylesheet" href="./session.css">
@@ -13,7 +13,7 @@
 </head>
 <body>
   <div class="app-shell">
-  <header class="header"><a href="./" class="brand" aria-label="EVOT PACHINKO ホーム"><span class="brand-wordmark"><span class="logo-gradient">EV</span>OT</span><span class="brand-sub">PACHINKO</span></a><a class="header-link" href="https://seiyokentstyle-source.github.io/ev-live/">EVOTを開く <span aria-hidden="true">↗</span></a></header>
+  <header class="header"><a href="./" class="brand" aria-label="PACHIEV ホーム"><span class="brand-wordmark">PACHI<span class="logo-gradient">EV</span></span><span class="brand-sub">EXPECTED VALUE</span></a><a class="header-link" href="https://seiyokentstyle-source.github.io/ev-live/">EVOTを開く <span aria-hidden="true">↗</span></a></header>
   <nav class="app-nav" aria-label="計算ツール内の移動"><a href="#calculator">計算条件</a><a href="#session-panel">回転率を調べる</a><a href="#results">計算結果</a></nav>
   <main>
     <div class="intro"><p class="eyebrow">EXPECTED VALUE CALCULATOR</p><h1>パチンコ期待値計算</h1><p class="lead">機種と実戦条件から期待値を計算。<br>着席前の台データ・着席後の記録から回転率も調べられます。</p></div>
@@ -53,7 +53,7 @@
     </div>
     <details class="method"><summary>計算式と、この計算機で扱う範囲 <span aria-hidden="true">＋</span></summary><div><p>初当たり確率・回転率・持ち玉使用割合を一定とした、通常時の固定回転数に対する推計です。登録機種は初当たり、チャージ、RUSH・LTの振り分けを積み上げ、通常時に戻るまでの平均差玉を計算します。公表値自体に丸めがあるため、内部確率そのものの厳密値ではありません。</p><p><b>期待収支</b> ＝ 初当たり期待回数 × 補正後平均差玉 × 1玉の交換額 − 通常時の玉の使用コスト</p><p><b>標準差玉</b> ＝ 払い出し玉数 − 当たり消化に必要な入賞玉数。こぼし・オーバー入賞・電サポ増減は0とし、差は出玉補正で調整します。未公表条件が残る機種は、非負の増加分を除外して数学的に下側になることを確認した場合に限り、保守的な下限として表示します。単一の確定期待値ではありません。下限計算は公表の丸め確率と入力条件を固定したモデルに対するもので、実機収支を保証しません。時給は利用者が入力した平均消化時間を固定した参考計算です。各機種の照合欄は記載した公表指標に対する確認であり、すべての内部条件の確定を意味しません。</p><p><b>通常時の玉の使用コスト</b> ＝ 通常回転数 ×（貸玉数 ÷ 回転率）×｛現金割合 × 1玉の貸玉料金 ＋ 持ち玉割合 × 1玉の交換額｝</p><p><b>推定時給</b> ＝ 期待収支 ÷｛通常回転数 ÷ 通常時の消化速度 ＋ 初当たり期待回数 × 当たりの平均消化時間 ÷ 60｝。消化時間が未入力なら時給を表示しません。</p><p>平均差玉は単発・チャージも連チャンも含む、すべての初当たりの平均です。RUSHに入った場合だけの平均や、払い出し玉数そのものとは異なります。特殊な開始状態やRUSH中からの期待値は扱いません。</p><p>持ち玉の増減・枯渇は自動シミュレーションしません。再プレイの手数料や上限、遊タイム、閉店による取り切れなさ、コンプリート機能による打ち切り、交換の端数は対象外です。予定通常回転数までに発生した当たりを通常復帰まで消化する前提で、休憩時間は含めません。</p><p>条件の保存先はこのブラウザのみです。別の端末とは同期しません。機種選択時の値と詳細手入力の平均差玉は別に保持し、旧版の保存データは上書きしません。</p></div></details>
   </main>
-  <footer><span class="footer-brand"><span class="logo-gradient">EV</span>OT <small>PACHINKO</small></span><span>機種スペックと実戦データで計算</span></footer>
+  <footer><span class="footer-brand">PACHI<span class="logo-gradient">EV</span></span><span>機種スペックと実戦データで計算</span></footer>
   <a href="#results" class="mobile-result-link">計算結果を見る <strong id="mobile-profit">—</strong><span aria-hidden="true">↑</span></a>
   </div>
 </body>

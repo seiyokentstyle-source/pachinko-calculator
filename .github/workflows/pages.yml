@@ -1,4 +1,4 @@
-name: Deploy EVOT PACHINKO to GitHub Pages
+name: Deploy PACHIEV to GitHub Pages
 
 on:
   push:
