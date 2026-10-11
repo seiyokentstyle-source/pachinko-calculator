@@ -22,10 +22,11 @@ export function initSession({getMachine,onApply,mount}){
         <select id="session-context"><option value="before">着席前：台の過去データから推定</option><option value="after">着席後：自分の実戦記録から計算</option></select>
       </div>
       <p class="session-period-note">同じ台・同じ期間のデータを入力。右打ち終了後の数字を使います。</p>
+      <p class="hint">数値欄の初期値は0です。そのままの欄は0として計算するため、開始値・純増などを実際の記録に合わせて変更してください。</p>
       <details class="session-help session-before-guide" id="session-before-guide" hidden>
         <summary>着席前に用意するデータ</summary>
         <p>①通常回転数（または履歴）②台差玉③当たり出玉の内訳。前の人の投資額や持ち玉は不要です。</p>
-        <p>本日全体を調べるなら、開始時の累計・差玉が0にリセットされていることを確認して0を入力します。開始値は自動で0にしません。</p>
+        <p>本日全体を調べるなら、開始時の累計・差玉が0にリセットされていることを確認してください。途中からの区間では、開始時点の実際の数字に変更します。</p>
         <p>総当たり回数だけでは、300個・1500個・3000個などの出玉を判別できません。内訳不明・履歴欠け・右打ちの範囲不明の場合は、必要な値を確認するまで算出できません。</p>
       </details>
 
@@ -174,6 +175,7 @@ export function initSession({getMachine,onApply,mount}){
     root.querySelectorAll('[data-session]').forEach(input=>{if(input.type==='checkbox')input.checked=values[input.dataset.session]===true;else input.value=values[input.dataset.session]??'';});
     options=sessionPrizes[getMachine()?.id]??[];const holder=$('session-prizes');holder.replaceChildren();
     for(const prize of options){
+      for(const field of ['counts','unitNets'])if(values[field][prize.id]==null||values[field][prize.id]==='')values[field][prize.id]='0';
       const row=document.createElement('div');row.className='session-award';const title=document.createElement('p');title.textContent=prize.label;const standard=document.createElement('span');standard.className='session-award-standard';standard.textContent=`参考標準：差玉${format(prize.net,0)}玉/回`;title.append(standard);row.append(title);
       const label=document.createElement('label');label.className='session-prize';const text=document.createElement('span');text.textContent='消化した回数';const input=document.createElement('input');input.type='number';input.min='0';input.step='1';input.inputMode='numeric';input.placeholder='0';input.setAttribute('aria-label',`${prize.label}の回数`);input.dataset.prize=prize.id;input.value=values.counts[prize.id]??'';const unit=document.createElement('span');unit.textContent='回';label.append(text,input,unit);row.append(label);
       const netBox=document.createElement('div');netBox.className='session-net-unit';const netLabel=document.createElement('label');netLabel.htmlFor=`session-net-${prize.id}`;netLabel.textContent='1回あたりの純増';const wrap=document.createElement('div');wrap.className='input-wrap small';const net=document.createElement('input');net.id=`session-net-${prize.id}`;net.type='number';net.inputMode='decimal';net.step='any';net.placeholder='実測値';net.dataset.unitNet=prize.id;net.setAttribute('aria-label',`${prize.label}の純増玉/回`);net.value=values.unitNets[prize.id]??'';const netUnit=document.createElement('span');netUnit.textContent='玉/回';const sign=document.createElement('button');sign.type='button';sign.className='session-sign';sign.dataset.sign=`net-${prize.id}`;sign.textContent='＋/−';sign.setAttribute('aria-label',`${prize.label}の純増の符号を切り替え`);wrap.append(net,netUnit,sign);netBox.append(netLabel,wrap);row.append(netBox);holder.append(row);

@@ -118,7 +118,7 @@ test('explicit spin transfer remains available and a loan change invalidates the
   ui.$('session-apply').click();
   assert.equal(ui.$('spins').value, '600');
   ui.input('loan', 220);
-  assert.equal(ui.$('rotation').value, '');
+  assert.equal(ui.$('rotation').value, '0');
   assert.equal(ui.$('profit').textContent, '—');
   assert.match(ui.$('rotation-source').textContent, /貸玉条件/);
   ui.view('before');
@@ -131,11 +131,11 @@ test('view and machine switching preserve independent records and reset optional
   ui.input('session-apply-spins', true);
   ui.view('after');
   assert.equal(ui.$('session-method').value, 'wallet');
-  assert.equal(ui.$('session-normalSpins').value, '');
+  assert.equal(ui.$('session-normalSpins').value, '0');
   ui.input('session-spinMode', 'direct');
   ui.input('session-normalSpins', 40);
   ui.input('machine', enako, 'change');
-  assert.equal(ui.$('session-normalSpins').value, '');
+  assert.equal(ui.$('session-normalSpins').value, '0');
   ui.view('before');
   ui.input('session-spinMode', 'direct');
   ui.input('session-normalSpins', 77);
@@ -161,13 +161,14 @@ test('legacy after-seat records restore without populating a new before-seat rec
   assert.equal(ui.$('session-normalSpins').value, '92');
   assert.equal(ui.$('session-rate').textContent, '23.00');
   ui.view('before');
-  assert.equal(ui.$('session-normalSpins').value, '');
-  assert.equal(ui.$('session-startDelta').value, '');
+  assert.equal(ui.$('session-normalSpins').value, '0');
+  assert.equal(ui.$('session-startDelta').value, '0');
   assert.equal(ui.$('session-apply').disabled, true);
 });
 
 test('manual EV inputs still produce the independent known numerical example', async t => {
   const ui = await mount(t);
+  for (const id of ['rotation', 'probability', 'payout', 'speed', 'bonusMinutes']) assert.equal(ui.$(id).value, '0');
   ui.input('machine', 'manual', 'change');
   for (const [id, value] of Object.entries({ probability: 100, payout: 500, spins: 1000, rotation: 20, holding: 0, loan: 250, exchange: 25 })) ui.input(id, value);
   assert.equal(ui.$('profit').textContent, '−30,000');
@@ -175,6 +176,68 @@ test('manual EV inputs still produce the independent known numerical example', a
   assert.equal(ui.$('cost').textContent, '50,000 円');
   assert.equal(ui.$('hits').textContent, '10.00 回');
   assert.equal(ui.$('hourly').textContent, '未設定');
+  ui.input('speed', 200);
+  assert.equal(ui.$('hourly').textContent, '−6,000');
+  ui.input('bonusMinutes', 60);
+  assert.equal(ui.$('hourly').textContent, '−2,000');
+  ui.input('speed', 0);
+  assert.equal(ui.$('hourly').textContent, '未設定');
+  assert.equal(ui.$('profit').textContent, '−30,000');
+  ui.$('reset').click();
+  for (const id of ['rotation', 'probability', 'payout', 'speed', 'bonusMinutes']) assert.equal(ui.$(id).value, '0');
+  assert.equal(ui.$('profit').textContent, '—');
+});
+
+test('zero defaults support a real wallet interval, but cleared fields and reset remove the result', async t => {
+  const ui = await mount(t);
+  ui.input('machine', ghoul, 'change');
+  ui.view('after');
+  assert.equal(ui.$('session-apply').disabled, true);
+  ui.input('session-endSpins', 100);
+  ui.input('session-cash', 5000);
+  ui.input('session-gainMode', 'none');
+  assert.equal(ui.$('session-rate').textContent, '20.00');
+  assert.equal(ui.$('session-consumed').textContent, '1,250.00 玉');
+  ui.input('session-startSpins', '');
+  assert.equal(ui.$('session-rate').textContent, '—');
+  assert.equal(ui.$('session-apply').disabled, true);
+  ui.$('session-clear').click();
+  for (const input of ui.$('session-panel').querySelectorAll('input[type="number"]')) {
+    assert.equal(input.value, input.dataset.session === 'payoutRate' ? '100' : '0');
+  }
+  assert.equal(ui.$('session-historyText').value, '');
+  assert.equal(ui.$('session-apply').disabled, true);
+});
+
+test('reopening blanks uses zero while saved observations and prize net values remain intact', async t => {
+  const ui = await mount(t, { storage: {
+    'tamayomi.conditions.v2': { version: 2, machine: ghoul, conditions: { rotation: '', speed: '', bonusMinutes: '', loan: '230' }, manual: { probability: '100', payout: '500' } },
+    'tamayomi.sessions.v1': { version: 1, context: 'before', records: {
+      [`${ghoul}::before`]: { startSpins: '', endSpins: '100', startDelta: '', endDelta: '-1250', gainMode: 'counts', netMode: 'measured' }
+    } }
+  } });
+  for (const id of ['rotation', 'speed', 'bonusMinutes']) assert.equal(ui.$(id).value, '0');
+  assert.equal(ui.$('loan').value, '230');
+  assert.equal(ui.$('probability').value, '100');
+  ui.view('before');
+  assert.equal(ui.$('session-startSpins').value, '0');
+  assert.equal(ui.$('session-endSpins').value, '100');
+  assert.equal(ui.$('session-startDelta').value, '0');
+  assert.equal(ui.$('session-endDelta').value, '-1250');
+  const count = ui.document.querySelector('[data-prize]');
+  const net = ui.document.querySelector(`[data-unit-net="${count.dataset.prize}"]`);
+  assert.equal(count.value, '0');
+  assert.equal(net.value, '0');
+  count.value = '1';
+  count.dispatchEvent(new ui.window.Event('input', { bubbles: true }));
+  assert.equal(ui.$('session-rate').textContent, '18.40');
+  assert.equal(ui.$('session-gain-result').textContent, '0.00 玉');
+  ui.input(net.id, 1400);
+  assert.equal(ui.$('session-consumed').textContent, '2,650.00 玉');
+  ui.view('after');
+  ui.view('before');
+  assert.equal(ui.$(net.id).value, '1400');
+  assert.equal(ui.$('session-rate').textContent, '8.68');
 });
 
 test('submitting invalid advanced conditions reveals the field instead of hiding its error', async t => {
@@ -207,7 +270,7 @@ test('mounted session exposes context API without rebuilding or losing its field
   ui.input('session-normalSpins', 123);
   session.setContext('after');
   assert.equal(session.getContext(), 'after');
-  assert.equal(field.value, '');
+  assert.equal(field.value, '0');
   session.setContext('before');
   assert.equal(session.getContext(), 'before');
   assert.equal(ui.$('session-normalSpins'), field);

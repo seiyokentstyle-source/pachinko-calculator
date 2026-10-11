@@ -33,9 +33,10 @@ const measured = (overrides = {}) => ({
   ...overrides,
 });
 
-test('新入力欄は未入力、履歴未確認、純増は従来の標準方式を維持する', () => {
+test('数値欄は0、履歴は空・未確認、純増は従来の標準方式を維持する', () => {
   const first = defaultSession(), second = defaultSession();
-  for (const key of ['normalSpins', 'historyStart', 'historyCurrent', 'historyText']) assert.equal(first[key], '');
+  for (const key of ['normalSpins', 'historyStart', 'historyCurrent']) assert.equal(first[key], '0');
+  assert.equal(first.historyText, '');
   assert.equal(first.historyConfirmed, false);
   assert.equal(first.netMode, 'standard');
   first.unitNets['1500'] = '1300';

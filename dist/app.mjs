@@ -6,8 +6,9 @@ const $ = id => document.getElementById(id);
 const form = $('calculator');
 const key = 'tamayomi.conditions.v2';
 const actualKeys = Object.keys(rules).filter(n => !['payout','probability'].includes(n));
-const initial = {...defaults, rotation:'', speed:'', bonusMinutes:''};
-let manual = { probability: '', payout: '' };
+const initial = {...defaults, rotation:'0', speed:'0', bonusMinutes:'0'};
+const zeroDefault = value => value === '' || value == null ? '0' : value;
+let manual = { probability: '0', payout: '0' };
 let mode = '';
 let rotationSource = '';
 let touched = new Set();
@@ -16,9 +17,11 @@ const fmt = (n, digits = 0) => n.toLocaleString('ja-JP', { minimumFractionDigits
 const signed = (n, digits = 0) => { const rounded = Number(n.toFixed(digits)); return `${rounded > 0 ? '+' : rounded < 0 ? '−' : ''}${fmt(Math.abs(rounded), digits)}`; };
 const selected = () => machines.find(m => m.id === $('machine').value);
 for (const m of machines) { const option=document.createElement('option'); option.value=m.id; option.textContent=`${m.shortName}｜1/${m.probability}${m.blockedReason ? '（計算停止）' : m.estimateKind==='lower-bound'?'（保守的な下限）':''}`; $('machine').insertBefore(option,$('machine').lastElementChild); }
-function writeConditions(values) { for(const n of actualKeys) $(n).value=values[n] ?? initial[n]; $('holding-slider').value=$('holding').value; }
+function writeConditions(values) { for(const n of actualKeys) $(n).value=initial[n]==='0'?zeroDefault(values[n]):values[n]??initial[n]; $('holding-slider').value=$('holding').value; }
 function read() {
   const values=Object.fromEntries(Object.keys(rules).map(n=>[n,$(n).value]));
+  // A zero speed means no hourly estimate; it must not block the EV calculation.
+  if (values.speed.trim() !== '' && Number(values.speed) === 0) values.speed='';
   const m=selected();
   if(m){const estimate=machineEstimate(m,Number($('payoutRate').value));values.probability=estimate?.probability??'';values.payout=estimate?.payout??'';}
   return values;
@@ -32,7 +35,7 @@ function load() {
     if(saved?.version===2 && saved.conditions){
       writeConditions(saved.conditions);
       $('machine').value=machines.some(m=>m.id===saved.machine)||saved.machine==='manual'?saved.machine:'';
-      if(saved.manual)manual=Object.fromEntries(['probability','payout'].map(n=>[n,['string','number'].includes(typeof saved.manual[n])?saved.manual[n]:'']));
+      if(saved.manual)manual=Object.fromEntries(['probability','payout'].map(n=>[n,['string','number'].includes(typeof saved.manual[n])?zeroDefault(saved.manual[n]):'0']));
       $('payoutRate').value=saved.payoutRate ?? 100;
       rotationSource=typeof saved.rotationSource==='string'?saved.rotationSource.slice(0,160):'';
     }
@@ -96,7 +99,7 @@ function render() {
   const rate=Number($('payoutRate').value);
   if(!isManual && ($('payoutRate').value.trim()===''||!Number.isFinite(rate)||rate<1||rate>120))errors.payoutRate='1〜120%の範囲で入力してください。';
   for(const name of [...Object.keys(rules),'payoutRate']){
-    const show=errors[name] && (touched.has(name) || (name!=='rotation' && $(name).value!==''));
+    const show=errors[name] && (touched.has(name) || (name!=='rotation' && $(name).value!=='' && $(name).value!=='0'));
     $(name).setAttribute('aria-invalid',show?'true':'false');$(`${name}-error`).textContent=show?errors[name]:'';
   }
   $('result-badge').classList.remove('negative','reference-result'); document.querySelector('.main-value').classList.remove('negative'); $('error-summary').hidden=true;
@@ -109,7 +112,7 @@ function render() {
   $('result-note').textContent=isManual?'入力された確率と平均差玉に基づく計算です。機種スペックとの照合は行いません。':m?.blockedReason?m.blockedReason:`${m?.modelBasis??'機種を選択してください。'} 公表値には丸めがあり、実機内部の厳密値ではありません。`;
   if(!m && !isManual){clearResult('機種を選んでください','機種未選択');return;}
   if(m?.blockedReason){clearResult('スペックの整合性が確認できるまで計算を停止しています','整合未確認');$('result-explanation').textContent=m.blockedReason;return;}
-  if(Object.keys(errors).length){clearResult(values.rotation===''?'実測回転率を入力してください':'入力内容を確認してください','入力待ち',Object.keys(errors).some(n=>touched.has(n)));return;}
+  if(Object.keys(errors).length){clearResult(errors.rotation?'実測回転率を入力してください':'入力内容を確認してください','入力待ち',Object.keys(errors).some(n=>touched.has(n)));return;}
   const result=calculate(values); if(!result){clearResult('条件を確認してください','入力を確認',true);return;}
   $('profit').textContent=money(result.profit);$('mobile-profit').textContent=`${conservative?'下限 ':''}${money(result.profit)}円`;
   $('hourly').textContent=result.hourly===null?'未設定':money(result.hourly);
@@ -153,13 +156,13 @@ form.addEventListener('submit',event=>{
 form.addEventListener('input',event=>{
   if(event.target.id==='machine')return;touched.add(event.target.id);
   if(event.target.id==='rotation')rotationSource='';
-  if(event.target.id==='loan'&&rotationSource){$('rotation').value='';rotationSource='貸玉条件を変更したため、着席記録から再反映してください。';}
+  if(event.target.id==='loan'&&rotationSource){$('rotation').value='0';rotationSource='貸玉条件を変更したため、着席記録から再反映してください。';}
   if(event.target.id==='holding-slider')$('holding').value=event.target.value;
   if(event.target.id==='holding'&&event.target.value!==''&&Number.isFinite(Number(event.target.value)))$('holding-slider').value=event.target.value;
   render();
 });
 $('machine').addEventListener('change',updateMachine);
-$('reset').addEventListener('click',()=>{writeConditions(initial);manual={probability:'',payout:''};$('probability').value='';$('payout').value='';$('payoutRate').value=100;rotationSource='';touched.clear();render();save();});
+$('reset').addEventListener('click',()=>{writeConditions(initial);manual={probability:'0',payout:'0'};$('probability').value='0';$('payout').value='0';$('payoutRate').value=100;rotationSource='';touched.clear();render();save();});
 load();updateMachine();
 const session=initSession({getMachine:selected,mount:$('session-mount'),onApply:(result,applySpins)=>{
   $('rotation').value=result.rotation;

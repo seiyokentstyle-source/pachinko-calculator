@@ -30,7 +30,11 @@ export function restoreRecord(saved, context) {
   if (isRecord(saved)) {
     for (const key of Object.keys(values)) {
       if (key === 'counts' || key === 'unitNets') continue;
-      if (Object.hasOwn(saved, key) && isFieldValue(saved[key])) values[key] = saved[key];
+      if (Object.hasOwn(saved, key) && isFieldValue(saved[key])) {
+        // Reopening an empty numeric field uses the current zero default.
+        if (values[key] === '0' && saved[key] === '') continue;
+        values[key] = saved[key];
+      }
     }
     values.counts = cloneFields(saved.counts);
     values.unitNets = cloneFields(saved.unitNets);

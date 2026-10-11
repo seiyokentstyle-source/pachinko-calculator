@@ -34,14 +34,14 @@ const SPIN_LIMIT = 1_000_000;
 
 export function defaultSession() {
   return {
-    method: 'wallet', spinMode: 'normal', startSpins: '', endSpins: '',
-    normalSpins: '', historyStart: '', historyCurrent: '', historyText: '',
+    method: 'wallet', spinMode: 'normal', startSpins: '0', endSpins: '0',
+    normalSpins: '0', historyStart: '0', historyCurrent: '0', historyText: '',
     historyConfirmed: false,
-    rightSpins: '', loan: '250', gainMode: '', gain: '', counts: {},
+    rightSpins: '0', loan: '250', gainMode: '', gain: '0', counts: {},
     netMode: 'standard', unitNets: {},
-    payoutRate: '100', supportDelta: '0', cash: '', replay: '0',
-    startBalls: '', endBalls: '', transferIn: '0', transferOut: '0',
-    startDelta: '', endDelta: '', displayApprox: true,
+    payoutRate: '100', supportDelta: '0', cash: '0', replay: '0',
+    startBalls: '0', endBalls: '0', transferIn: '0', transferOut: '0',
+    startDelta: '0', endDelta: '0', displayApprox: true,
   };
 }
 

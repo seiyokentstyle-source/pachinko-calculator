@@ -45,10 +45,11 @@ test('開始値の空欄を日次0として扱わず、必須入力を欠いた�
   assert.ok(history.errors.historyStart);
 });
 
-test('新規記録は着席前後とも回転・差玉・履歴の開始値を未入力に保つ', () => {
+test('新規記録は数値0・空の履歴から始まり初期状態では結果を出さない', () => {
   for (const context of ['before', 'after']) {
     const record = newRecord(context);
-    for (const key of ['startSpins', 'endSpins', 'normalSpins', 'startDelta', 'endDelta', 'historyStart', 'historyCurrent', 'historyText']) assert.equal(record[key], '');
+    for (const key of ['startSpins', 'endSpins', 'normalSpins', 'startDelta', 'endDelta', 'historyStart', 'historyCurrent']) assert.equal(record[key], '0');
+    assert.equal(record.historyText, '');
     assert.equal(record.historyConfirmed, false);
     assert.equal(calculateRecord(record, [], context, '250').result, null);
   }
@@ -103,7 +104,7 @@ test('再読込した回数・純増辞書は保存元や別記録と共有し�
 test('復元では配列・未知欄・入れ子オブジェクトをフォーム値として受け入れない', () => {
   const restored = restoreRecord({ method: 'wallet', startSpins: {}, endSpins: '1800', counts: ['3'], unitNets: ['1400'], unknown: 'x' }, 'before');
   assert.equal(restored.method, 'display');
-  assert.equal(restored.startSpins, '');
+  assert.equal(restored.startSpins, '0');
   assert.equal(restored.endSpins, '1800');
   assert.deepEqual(restored.counts, {}); assert.deepEqual(restored.unitNets, {});
   assert.equal(Object.hasOwn(restored, 'unknown'), false);
@@ -119,8 +120,8 @@ test('着席前のリセットは同じ機種の着席後記録も別機種も�
   const records = { [beforeKey]: observed(), [afterKey]: { ...newRecord('after'), cash: '5000' }, [otherKey]: observed({ endSpins: '2000' }) };
   const afterSnapshot = structuredClone(records[afterKey]), otherSnapshot = structuredClone(records[otherKey]);
   records[beforeKey] = newRecord('before');
-  assert.equal(records[beforeKey].startDelta, '');
-  assert.equal(records[beforeKey].startSpins, '');
+  assert.equal(records[beforeKey].startDelta, '0');
+  assert.equal(records[beforeKey].startSpins, '0');
   assert.deepEqual(records[afterKey], afterSnapshot);
   assert.deepEqual(records[otherKey], otherSnapshot);
 });
