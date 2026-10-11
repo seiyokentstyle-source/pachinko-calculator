@@ -1,0 +1,14 @@
+{
+  "name": "pachiev",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test.mjs spec-test.mjs session-test.mjs all-input-test.mjs before-seat-test.mjs ui-test.mjs"
+  },
+  "devDependencies": {
+    "jsdom": "26.1.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

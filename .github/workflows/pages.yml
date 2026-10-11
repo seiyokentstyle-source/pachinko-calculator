@@ -20,8 +20,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Verify calculations and session data
-        run: node --test test.mjs spec-test.mjs session-test.mjs all-input-test.mjs before-seat-test.mjs
+          cache: npm
+      - name: Install test dependencies
+        run: npm ci
+      - name: Verify calculations, session data, and UI integration
+        run: npm test
       - name: Check JavaScript syntax
         run: |
           for file in dist/*.mjs; do node --check "$file"; done

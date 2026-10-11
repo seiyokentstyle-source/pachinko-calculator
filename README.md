@@ -5,12 +5,14 @@
 - 公開先: https://seiyokentstyle-source.github.io/pachinko-calculator/
 - EVOT本体: https://seiyokentstyle-source.github.io/ev-live/
 - `main` へのpush後、GitHub Actionsが計算テストとJavaScript構文検証を行い、成功した `dist/` だけをGitHub Pagesへ公開します。
-- スタイルは白いガラス面、濃紺の文字、青い数値を使った幅480pxのスマホ向け構成です。外部フォント・外部スクリプトに依存しません。
+- 白基調・濃紺の文字・青い数値を使い、スマホは1列、広い画面は入力と結果を2列で表示します。外部フォント・外部スクリプトに依存しません。
+- 「期待値・着席前・着席後」を切り替え、機種と貸玉条件を共通設定にしています。回転率の入力は「回転数・玉の出入り・当たり出玉」の3区分。長文の入力例・機種根拠は折りたたみ、下限表示・標準値の仮定・不足項目は残しています。
 - 入力データは同じURLのブラウザ内に保存されます。Sites版とGitHub Pages版は別オリジンのため、以前の保存値は自動移行しません。キー名は互換性のため `tamayomi.*` を保持しています。
 
 - `dist/`：そのまま配信できるHTML・CSS・JavaScript。外部依存なし。
 - `node server.mjs`：ローカル表示（http://127.0.0.1:4179）。
 - `node --test test.mjs spec-test.mjs session-test.mjs all-input-test.mjs before-seat-test.mjs`：交換条件・機種の状態遷移・独立した閉形式・実戦記録の玉収支・履歴集計・個別純増入力・着席前後の分離を検証。
+- `npm ci` → `npm test`：上記86件に加え、jsdomで画面切替・保存復元・反映・貸玉変更・入力エラーへの移動の8件を検証。jsdomは開発時のみ使用し、公開ファイルには含めません。実ブラウザの描画検証とは別です。
 
 `dist/machines.mjs` に6機種の振り分け・出典・資料確認日を登録し、`dist/spec-engine.mjs` で吸収過程の期待報酬を解きます。初当たりから通常復帰までの平均差玉を用い、固定通常回転数に対する期待収支を計算します。持ち玉使用割合は固定の外生入力で、持ち玉の推移や閉店終了はシミュレーションしません。
 

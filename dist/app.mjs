@@ -1,6 +1,7 @@
 import { defaults, rules, validate, calculate } from './calc.mjs';
 import { machines, machineEstimate } from './machines.mjs';
 import { initSession } from './session-ui.mjs';
+import { initViews } from './view-ui.mjs';
 const $ = id => document.getElementById(id);
 const form = $('calculator');
 const key = 'tamayomi.conditions.v2';
@@ -10,6 +11,7 @@ let manual = { probability: '', payout: '' };
 let mode = '';
 let rotationSource = '';
 let touched = new Set();
+let views;
 const fmt = (n, digits = 0) => n.toLocaleString('ja-JP', { minimumFractionDigits: digits, maximumFractionDigits: digits });
 const signed = (n, digits = 0) => { const rounded = Number(n.toFixed(digits)); return `${rounded > 0 ? '+' : rounded < 0 ? '−' : ''}${fmt(Math.abs(rounded), digits)}`; };
 const selected = () => machines.find(m => m.id === $('machine').value);
@@ -86,7 +88,9 @@ function render() {
   const values=read(), m=selected(), errors=validate(values), isManual=$('machine').value==='manual';
   const conservative=m?.estimateKind==='lower-bound';
   const money=value=>signed(conservative?Math.floor(value):value);
-  $('rotation-source').textContent=rotationSource||'直接入力、または上の着席データから反映できます。';
+  $('rotation-source').textContent=rotationSource||'1,000円あたりの通常回転数を入力。';
+  $('shop-summary').textContent=`貸玉 ${$('loan').value||'未入力'}玉／1,000円 · 交換 ${$('exchange').value||'未入力'}玉／100円`;
+  $('adjustment-summary').textContent=`持ち玉 ${$('holding').value||'未入力'}%${isManual?'':` · 出玉補正 ${$('payoutRate').value||'未入力'}%`}`;
   save();
   if(!isManual){delete errors.probability;delete errors.payout;}
   const rate=Number($('payoutRate').value);
@@ -133,7 +137,19 @@ function render() {
     const amount=document.createElement('span');amount.textContent=`${money(row.result.profit)}円`;el.append(label,bar,amount);return el;
   }));
 }
-form.addEventListener('submit',event=>{event.preventDefault();touched=new Set(Object.keys(rules));render();});
+form.addEventListener('submit',event=>{
+  event.preventDefault();
+  if(views?.current!=='ev')return;
+  touched=new Set([...Object.keys(rules),'payoutRate']);render();
+  const invalid=[...document.querySelectorAll('#ev-view [aria-invalid="true"], #common-settings [aria-invalid="true"]')].find(input=>!input.closest('[hidden]'));
+  const target=!$('machine').value?$('machine'):invalid;
+  if(target){
+    for(let parent=target.parentElement;parent;parent=parent.parentElement)if(parent.tagName==='DETAILS')parent.open=true;
+    target.focus();target.scrollIntoView?.({block:'center'});
+  }else{
+    $('results').scrollIntoView?.({block:'start'});$('results-title').setAttribute('tabindex','-1');$('results-title').focus({preventScroll:true});
+  }
+});
 form.addEventListener('input',event=>{
   if(event.target.id==='machine')return;touched.add(event.target.id);
   if(event.target.id==='rotation')rotationSource='';
@@ -145,9 +161,11 @@ form.addEventListener('input',event=>{
 $('machine').addEventListener('change',updateMachine);
 $('reset').addEventListener('click',()=>{writeConditions(initial);manual={probability:'',payout:''};$('probability').value='';$('payout').value='';$('payoutRate').value=100;rotationSource='';touched.clear();render();save();});
 load();updateMachine();
-initSession({getMachine:selected,onApply:(result,applySpins)=>{
+const session=initSession({getMachine:selected,mount:$('session-mount'),onApply:(result,applySpins)=>{
   $('rotation').value=result.rotation;
   rotationSource=`${selected()?.shortName??'手入力'}の${result.recordContext==='before'?'着席前の台データ':'着席後の実戦記録'}から反映：${result.recordContext==='before'?'過去データによる推定':result.estimated?'1回あたり出玉・概数を含む推定':'実測入力に基づく計算'}。`;
   if(applySpins)$('spins').value=result.spins;
   touched.add('rotation');render();
+  views.show('ev');$('rotation').focus();$('rotation').scrollIntoView?.({block:'center'});
 }});
+views=initViews(session);
